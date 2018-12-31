@@ -15,6 +15,7 @@ import {
   format
 } from 'date-fns';
 import { Subject, Observable } from 'rxjs';
+import { concatMap } from 'rxjs/operators';
 import { map } from 'rxjs/operators';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import {
@@ -31,6 +32,12 @@ interface Book {
   // author: string;
   end_date: string;
   start_date: string;
+}
+
+interface Bookinfo {
+  id: string;
+  title: string;
+  author: string;
 }
 
 @Component({
@@ -199,24 +206,49 @@ export class CalendarComponent implements OnInit {
     };
 
     this.events$ = this.http
-      .post('http://localhost:5000/api/1.0/get/booking', { start_date: '2018-12-24', end_date: '2019-01-04' }, httpOptions)
+      .post('http://localhost:5000/api/1.0/get/booking', { start_date: format(getStart(this.viewDate), 'YYYY-MM-DD'), end_date: format(getEnd(this.viewDate), 'YYYY-MM-DD') }, httpOptions)
       .pipe(
+        // mergeMap(bookings => {
+        //   return bookings.map
+
+        //   this.http.get(`http://localhost:8080/book/id/${book.book_id}`)
+        // })
         map(({ bookings }: { bookings: Book[] }) => {
           return bookings.map((book: Book) => {
-            return {
-              title: book.book_id,
-              start: new Date(
-                book.start_date
-              ),
-              end: new Date(
-                book.end_date
-              ),
-              color: colors.yellow,
-              allDay: true,
-              meta: {
-                book
-              }
-            };
+
+            this.http.get(`http://localhost:8080/book/id/${book.book_id}`)
+              .subscribe((bookinfo: Bookinfo) => {
+                console.log(bookinfo.title);
+                return {
+                  title: `${bookinfo.title} (Booked: ${book.start_date} - ${book.end_date})`,
+                  start: new Date(
+                    book.start_date
+                  ),
+                  end: new Date(
+                    book.end_date
+                  ),
+                  color: colors.yellow,
+                  allDay: true,
+                  meta: {
+                    book
+                  }
+                };
+            });
+
+            // return {
+            //   title: `${book_info} (Booked: ${book.start_date} - ${book.end_date})`,
+            //   start: new Date(
+            //     book.start_date
+            //   ),
+            //   end: new Date(
+            //     book.end_date
+            //   ),
+            //   color: colors.yellow,
+            //   allDay: true,
+            //   meta: {
+            //     book
+            //   }
+            // };
           });
         })
       );
