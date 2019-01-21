@@ -205,59 +205,36 @@ export class CalendarComponent implements OnInit {
       })
     };
 
-    this.test_events$ = this.http
+    this.events$ = this.http
       .post('http://63.34.166.57:5000/api/1.0/get/booking', { start_date: format(getStart(this.viewDate), 'YYYY-MM-DD'), end_date: format(getEnd(this.viewDate), 'YYYY-MM-DD') }, httpOptions)
       .pipe(
         mergeMap((bookings: any) => {
-          console.log(bookings);
-          let arr = bookings.bookings.map(booking => {
-            console.log(booking);
-            return this.http.get(`http://63.34.166.57:8080/book/id/${booking.book_id}`).pipe(
-              tap(response => console.log(response)),
-              map((book: any) => book.author),
+          let arr = bookings.bookings.map((booking, i) => {
+              let color = i % 2 ? colors.yellow : colors.blue;
+              return this.http.get(`http://63.34.166.57:8080/book/id/${booking.book_id}`).pipe(
+              // tap(response => console.log(response)),
+              map((book: any) => {
+                return {
+                  title: `${book.title} (Booked by: ${booking.user_id})`,
+                  start: new Date(
+                    booking.start_date
+                  ),
+                  end: new Date(
+                    booking.end_date
+                  ),
+                  color: color,
+                  allDay: true,
+                  meta: {
+                    booking
+                  }
+                };
+              }),
               tap(response => console.log(response))
             );
           });
-          console.log(arr);
           return forkJoin(arr);
-        }),
-        map(book => console.log(book))
+        })
       );
-
-    // this.test_events$ = this.http
-    //   .post('http://localhost:5000/api/1.0/get/booking', { start_date: format(getStart(this.viewDate), 'YYYY-MM-DD'), end_date: format(getEnd(this.viewDate), 'YYYY-MM-DD') }, httpOptions)
-    //   .pipe(
-    //     mergeMap((bookings: any) => {
-    //       console.log("Booking:" )
-    //       return this.http.get(`http://localhost:8080/book/id/${booking.book_id}`);
-    //                             // .pipe(map((x: Bookinfo) => console.log(x.title)));
-    //     })
-    //   );
-
-    // this.events$ = this.http
-    //   .post('http://localhost:5000/api/1.0/get/booking', { start_date: format(getStart(this.viewDate), 'YYYY-MM-DD'), end_date: format(getEnd(this.viewDate), 'YYYY-MM-DD') }, httpOptions)
-    //   .pipe(
-
-    //     map(({ bookings }: { bookings: Booking[] }) => {
-    //       return bookings.map((booking: Booking) => {
-    //         return {
-    //           title: `${booking.book_id} (Booked: ${booking.start_date} - ${booking.end_date})`,
-    //           start: new Date(
-    //             booking.start_date
-    //           ),
-    //           end: new Date(
-    //             booking.end_date
-    //           ),
-    //           color: colors.yellow,
-    //           allDay: true,
-    //           meta: {
-    //             booking
-    //           }
-    //         };
-    //       });
-    //     })
-    //     // ******** end map
-    //   );
 
   }
 

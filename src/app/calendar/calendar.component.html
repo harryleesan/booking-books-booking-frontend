@@ -13,36 +13,36 @@
   </div>
 </ng-template>
 
-<div *ngIf="test_events$ | async; let events">
-  <ul>
-    <li *ngFor="let event of events">
-      {{ event }}
-    </li>
-  </ul>
-</div>
-
-<!-- <div *ngIf="events$ | async; else loading; let events"> -->
-<!--   <div [ngSwitch]="view"> -->
-<!--     <mwl-calendar-month-view -->
-<!--       *ngSwitchCase="'month'" -->
-<!--       [viewDate]="viewDate" -->
-<!--       [events]="events" -->
-<!--       [activeDayIsOpen]="activeDayIsOpen" -->
-<!--       (dayClicked)="dayClicked($event.day)" -->
-<!--       (eventClicked)="eventClicked($event.event)"> -->
-<!--     </mwl-calendar-month-view> -->
-<!--     <mwl-calendar-week-view -->
-<!--       *ngSwitchCase="'week'" -->
-<!--       [viewDate]="viewDate" -->
-<!--       [events]="events" -->
-<!--       (eventClicked)="eventClicked($event.event)"> -->
-<!--     </mwl-calendar-week-view> -->
-<!--     <mwl-calendar-day-view -->
-<!--       *ngSwitchCase="'day'" -->
-<!--       [viewDate]="viewDate" -->
-<!--       [events]="events" -->
-<!--       (eventClicked)="eventClicked($event.event)"> -->
-<!--     </mwl-calendar-day-view> -->
-<!--   </div> -->
+<!-- <div *ngIf="test_events$ | async; let events"> -->
+<!--   <ul> -->
+<!--     <li *ngFor="let event of events"> -->
+<!--       {{ event }} -->
+<!--     </li> -->
+<!--   </ul> -->
 <!-- </div> -->
+
+<div *ngIf="events$ | async; else loading; let events">
+  <div [ngSwitch]="view">
+    <mwl-calendar-month-view
+      *ngSwitchCase="'month'"
+      [viewDate]="viewDate"
+      [events]="events"
+      [activeDayIsOpen]="activeDayIsOpen"
+      (dayClicked)="dayClicked($event.day)"
+      (eventClicked)="eventClicked($event.event)">
+    </mwl-calendar-month-view>
+    <mwl-calendar-week-view
+      *ngSwitchCase="'week'"
+      [viewDate]="viewDate"
+      [events]="events"
+      (eventClicked)="eventClicked($event.event)">
+    </mwl-calendar-week-view>
+    <mwl-calendar-day-view
+      *ngSwitchCase="'day'"
+      [viewDate]="viewDate"
+      [events]="events"
+      (eventClicked)="eventClicked($event.event)">
+    </mwl-calendar-day-view>
+  </div>
+</div>
 
