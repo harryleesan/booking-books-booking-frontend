@@ -26,6 +26,7 @@ import {
 import { colors } from '../demo-utils/colors';
 
 interface Booking {
+  user_id: string;
   book_id: string;
   // title: string;
   // author: string;
@@ -55,8 +56,7 @@ export class CalendarComponent implements OnInit {
 
   viewDate: Date = new Date();
 
-  events$: Observable<Array<CalendarEvent<{book: Bookinfo}>>>;
-  test_events$: any;
+  bookings$: Observable<Array<CalendarEvent<{book: Bookinfo}>>>;
 
   activeDayIsOpen: boolean = false;
 
@@ -205,16 +205,15 @@ export class CalendarComponent implements OnInit {
       })
     };
 
-    this.events$ = this.http
+    this.bookings$ = this.http
       .post('http://63.34.166.57:5000/api/1.0/get/booking', { start_date: format(getStart(this.viewDate), 'YYYY-MM-DD'), end_date: format(getEnd(this.viewDate), 'YYYY-MM-DD') }, httpOptions)
       .pipe(
-        mergeMap((bookings: any) => {
+        mergeMap(( bookings : { bookings: Booking[] }) => {
           let arr = bookings.bookings.map((booking, i) => {
-              let color = i % 2 ? colors.yellow : colors.blue;
-              return this.http.get(`http://63.34.166.57:8080/book/id/${booking.book_id}`).pipe(
-              // tap(response => console.log(response)),
-              map((book: any) => {
-                return {
+            let color = i % 2 ? colors.yellow : colors.blue;
+            return this.http.get(`http://63.34.166.57:8080/book/id/${booking.book_id}`).pipe(
+              map((book: Bookinfo): CalendarEvent => {
+                let booking_event = {
                   title: `${book.title} (Booked by: ${booking.user_id})`,
                   start: new Date(
                     booking.start_date
@@ -228,12 +227,15 @@ export class CalendarComponent implements OnInit {
                     booking
                   }
                 };
+                this.events.push(booking_event);
+                return booking_event;
               }),
               tap(response => console.log(response))
             );
           });
           return forkJoin(arr);
         })
+        // tap(results => console.log(results))
       );
 
   }
