@@ -50,6 +50,8 @@ export class CalendarComponent implements OnInit {
   @ViewChild('modalContent')
   modalContent: TemplateRef<any>;
 
+  hideSubmit: boolean = true;
+
   view: CalendarView = CalendarView.Month;
 
   CalendarView = CalendarView;
@@ -83,46 +85,9 @@ export class CalendarComponent implements OnInit {
 
   refresh: Subject<any> = new Subject();
 
-  events: CalendarEvent[] = [
-    {
-      start: subDays(startOfDay(new Date()), 1),
-      end: addDays(new Date(),1),
-      title: 'A 3 day event',
-      color: colors.red,
-      actions: this.actions,
-      allDay: true,
-      resizable: {
-        beforeStart: true,
-        afterEnd: true
-      },
-      draggable: true
-    },
-  {
-      start: startOfDay(new Date()),
-      title: 'An event with no end date',
-      color: colors.yellow,
-      actions: this.actions
-    },
-    {
-      start: subDays(endOfMonth(new Date()), 3),
-      end: addDays(endOfMonth(new Date()), 3),
-      title: 'A long event that spans 2 months',
-      color: colors.blue,
-      allDay: true
-    },
-    {
-      start: addHours(startOfDay(new Date()), 2),
-      end: new Date(),
-      title: 'A draggable and resizable event',
-      color: colors.yellow,
-      actions: this.actions,
-      resizable: {
-        beforeStart: true,
-        afterEnd: true
-      },
-      draggable: true
-    }
-  ];
+  retrieved_events: CalendarEvent[] = [];
+
+  events: CalendarEvent[] = [];
 
   constructor(private modal: NgbModal, private http: HttpClient) { }
 
@@ -173,6 +138,9 @@ export class CalendarComponent implements OnInit {
         afterEnd: true
       }
     });
+    if (this.events.length > 0) {
+      this.hideSubmit = false;
+    }
     this.refresh.next()
   }
 
@@ -227,7 +195,7 @@ export class CalendarComponent implements OnInit {
                     booking
                   }
                 };
-                this.events.push(booking_event);
+                this.retrieved_events.push(booking_event);
                 return booking_event;
               }),
               tap(response => console.log(response))

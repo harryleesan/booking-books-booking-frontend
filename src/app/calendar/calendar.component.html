@@ -18,44 +18,37 @@
     <mwl-calendar-month-view
       *ngSwitchCase="'month'"
       [viewDate]="viewDate"
-      [events]="events"
+      [events]="retrieved_events.concat(events)"
       [activeDayIsOpen]="activeDayIsOpen"
       (dayClicked)="dayClicked($event.day)"
       (eventClicked)="eventClicked($event.event)">
     </mwl-calendar-month-view>
-    <mwl-calendar-week-view
-      *ngSwitchCase="'week'"
-      [viewDate]="viewDate"
-      [events]="events"
-      (eventClicked)="eventClicked($event.event)">
-    </mwl-calendar-week-view>
-    <mwl-calendar-day-view
-      *ngSwitchCase="'day'"
-      [viewDate]="viewDate"
-      [events]="events"
-      (eventClicked)="eventClicked($event.event)">
-    </mwl-calendar-day-view>
   </div>
 </div>
 
-<br><br><br>
+<br><br>
 
 <h3>
   Edit events
-  <button
-    class="btn btn-primary pull-right"
-    (click)="addEvent()">
-    Add new
-  </button>
-  <div class="clearfix"></div>
 </h3>
+<button
+  class="btn btn-primary pull-right"
+  (click)="addEvent()">
+  Add new
+</button>
+<button
+  [disabled]="hideSubmit"
+  class="btn btn-success pull-right"
+  (click)="submitBookings()">
+  Submit
+</button>
+<div class="clearfix"></div>
 
 <table class="table table-bordered">
 
   <thead>
     <tr>
       <th>Title</th>
-      <th>Primary color</th>
       <th>Starts at</th>
       <th>Ends at</th>
       <th>Remove</th>
@@ -70,12 +63,6 @@
           class="form-control"
           [(ngModel)]="event.title"
           (keyup)="refresh.next()">
-      </td>
-      <td>
-        <input
-          type="color"
-          [(ngModel)]="event.color.primary"
-          (change)="refresh.next()">
       </td>
       <td>
         <input
@@ -108,7 +95,7 @@
       <td>
         <button
           class="btn btn-danger"
-          (click)="events.splice(index, 1); refresh.next()">
+          (click)="events.splice(index, 1); events.length > 0 ? hideSubmit = false : hideSubmit = true; refresh.next()">
           Delete
         </button>
       </td>
