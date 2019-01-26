@@ -9,7 +9,7 @@
   <div class="text-center">
     <i class="fa fa-spin fa-spinner fa-5x"></i>
     <br>
-    Loading events...
+    Loading ...
   </div>
 </ng-template>
 
@@ -18,7 +18,7 @@
     <mwl-calendar-month-view
       *ngSwitchCase="'month'"
       [viewDate]="viewDate"
-      [events]="retrieved_events.concat(events)"
+      [events]="retrieved_events"
       [activeDayIsOpen]="activeDayIsOpen"
       (dayClicked)="dayClicked($event.day)"
       (eventClicked)="eventClicked($event.event)">
@@ -48,6 +48,7 @@
 
   <thead>
     <tr>
+      <th>User ID</th>
       <th>Title</th>
       <th>Starts at</th>
       <th>Ends at</th>
@@ -56,26 +57,30 @@
   </thead>
 
   <tbody>
-    <tr *ngFor="let event of events; let index = index">
+    <tr *ngFor="let booking of bookings; let index = index">
       <td>
         <input
           type="text"
           class="form-control"
-          [(ngModel)]="event.title"
-          (keyup)="refresh.next()">
+          [(ngModel)]="booking.user_id">
+      </td>
+      <td>
+        <div *ngIf="books$ | async; else loading">
+          <select class="form-control" id="books" [(ngModel)]="booking.book_id">
+            <option *ngFor="let book of books" [value]="book.id">{{book.title}}</option>
+          </select>
+        </div>
       </td>
       <td>
         <input
           class="form-control"
           type="text"
           mwlFlatpickr
-          [(ngModel)]="event.start"
-          (ngModelChange)="refresh.next()"
+          [(ngModel)]="booking.start_date"
           [altInput]="true"
-          [convertModelValue]="true"
-          [enableTime]="true"
-          dateFormat="Y-m-dTH:i"
-          altFormat="F j, Y H:i"
+          [minDate]="today"
+          dateFormat="Y-m-d"
+          altFormat="F j, Y"
           placeholder="Not set">
       </td>
       <td>
@@ -83,19 +88,17 @@
           class="form-control"
           type="text"
           mwlFlatpickr
-          [(ngModel)]="event.end"
-          (ngModelChange)="refresh.next()"
+          [(ngModel)]="booking.end_date"
           [altInput]="true"
-          [convertModelValue]="true"
-          [enableTime]="true"
-          dateFormat="Y-m-dTH:i"
-          altFormat="F j, Y H:i"
+          [minDate]="booking.start_date"
+          dateFormat="Y-m-d"
+          altFormat="F j, Y"
           placeholder="Not set">
       </td>
       <td>
         <button
           class="btn btn-danger"
-          (click)="events.splice(index, 1); events.length > 0 ? hideSubmit = false : hideSubmit = true; refresh.next()">
+          (click)="bookings.splice(index, 1); bookings.length > 0 ? hideSubmit = false : hideSubmit = true">
           Delete
         </button>
       </td>

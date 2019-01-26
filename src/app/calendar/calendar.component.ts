@@ -56,9 +56,13 @@ export class CalendarComponent implements OnInit {
 
   CalendarView = CalendarView;
 
+  today: Date = new Date();
+
   viewDate: Date = new Date();
 
   bookings$: Observable<Array<CalendarEvent<{book: Bookinfo}>>>;
+  books$: Observable<Array<Bookinfo>>;
+  books: Bookinfo[] = [];
 
   activeDayIsOpen: boolean = false;
 
@@ -88,6 +92,8 @@ export class CalendarComponent implements OnInit {
   retrieved_events: CalendarEvent[] = [];
 
   events: CalendarEvent[] = [];
+
+  bookings: Booking[] = [];
 
   constructor(private modal: NgbModal, private http: HttpClient) { }
 
@@ -127,18 +133,13 @@ export class CalendarComponent implements OnInit {
   }
 
   addEvent(): void {
-    this.events.push({
-      title: 'New event',
-      start: startOfDay(new Date()),
-      end: endOfDay(new Date()),
-      color: colors.red,
-      draggable: true,
-      resizable: {
-        beforeStart: true,
-        afterEnd: true
-      }
+    this.bookings.push({
+      user_id: '1',
+      book_id: '',
+      start_date: format(new Date(), "YYYY-MM-DD"),
+      end_date: format(new Date(), "YYYY-MM-DD"),
     });
-    if (this.events.length > 0) {
+    if (this.bookings.length > 0) {
       this.hideSubmit = false;
     }
     this.refresh.next()
@@ -206,6 +207,35 @@ export class CalendarComponent implements OnInit {
         // tap(results => console.log(results))
       );
 
+      this.fetchBooks();
+  }
+
+  fetchBooks(): void {
+    this.books$ = this.http
+    .get('http://63.34.166.57:8080/book/all')
+    .pipe(
+      tap((books_response: Bookinfo[])=> {
+        this.books = [];
+        books_response.map((book: Bookinfo) => {
+          console.log(book);
+          this.books.push(book);
+        });
+      })
+    );
+  }
+
+  submitBookings(): void {
+    console.log(this.bookings);
+    const httpOptions = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    };
+
+    this.bookings.map((booking: Booking) => {
+      this.http.post('http://63.34.166.57:5000/api/1.0/create/booking', booking, httpOptions)
+      .subscribe((response: Response) => console.log(response.status));
+    })
   }
 
   // eventClicked(event: CalendarEvent<{ book: Book }>): void {
