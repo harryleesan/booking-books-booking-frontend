@@ -1,4 +1,5 @@
 import { Component,ChangeDetectionStrategy, ViewChild, TemplateRef, OnInit } from '@angular/core';
+// import { Router } from '@angular/router';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import {
   startOfDay,
@@ -15,7 +16,7 @@ import {
   format
 } from 'date-fns';
 import { forkJoin, Subject, Observable } from 'rxjs';
-import { mergeMap, map, pluck, tap } from 'rxjs/operators';
+import { mergeMap, map, pluck, tap, finalize, toArray, defaultIfEmpty } from 'rxjs/operators';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import {
   CalendarEvent,
@@ -51,6 +52,9 @@ export class CalendarComponent implements OnInit {
   modalContent: TemplateRef<any>;
 
   hideSubmit: boolean = true;
+  hideAdd: boolean = false;
+  submitting: boolean = false;
+  submitStatus: string = "";
 
   view: CalendarView = CalendarView.Month;
 
@@ -63,6 +67,18 @@ export class CalendarComponent implements OnInit {
   bookings$: Observable<Array<CalendarEvent<{book: Bookinfo}>>>;
   books$: Observable<Array<Bookinfo>>;
   books: Bookinfo[] = [];
+
+  booking_url = {
+    base: "http://63.34.166.57:5000",
+    createBooking: "/api/1.0/create/booking",
+    getAllBookings: "/api/1.0/get/booking"
+  };
+
+  book_url = {
+    base: "http://63.34.166.57:8080",
+    getBookById: "/book/id",
+    getAllBooks: "/book/all"
+  }
 
   activeDayIsOpen: boolean = false;
 
@@ -89,7 +105,21 @@ export class CalendarComponent implements OnInit {
 
   refresh: Subject<any> = new Subject();
 
-  retrieved_events: CalendarEvent[] = [];
+  retrieved_events: CalendarEvent[] = [
+    {
+      start: subDays(startOfDay(new Date()), 1),
+      end: addDays(new Date(), 1),
+      title: 'A 3 day event',
+      color: colors.red,
+      actions: this.actions,
+      allDay: true,
+      resizable: {
+        beforeStart: true,
+        afterEnd: true
+      },
+      draggable: true
+    }
+  ];
 
   events: CalendarEvent[] = [];
 
@@ -141,6 +171,7 @@ export class CalendarComponent implements OnInit {
     });
     if (this.bookings.length > 0) {
       this.hideSubmit = false;
+      this.hideAdd = true;
     }
     this.refresh.next()
   }
@@ -175,12 +206,13 @@ export class CalendarComponent implements OnInit {
     };
 
     this.bookings$ = this.http
-      .post('http://63.34.166.57:5000/api/1.0/get/booking', { start_date: format(getStart(this.viewDate), 'YYYY-MM-DD'), end_date: format(getEnd(this.viewDate), 'YYYY-MM-DD') }, httpOptions)
+      .post(this.booking_url.base + this.booking_url.getAllBookings, { start_date: format(getStart(this.viewDate), 'YYYY-MM-DD'), end_date: format(getEnd(this.viewDate), 'YYYY-MM-DD') }, httpOptions)
       .pipe(
         mergeMap(( bookings : { bookings: Booking[] }) => {
           let arr = bookings.bookings.map((booking, i) => {
             let color = i % 2 ? colors.yellow : colors.blue;
-            return this.http.get(`http://63.34.166.57:8080/book/id/${booking.book_id}`).pipe(
+            this.retrieved_events = [];
+            return this.http.get(this.book_url.base + this.book_url.getBookById + `/${booking.book_id}`).pipe(
               map((book: Bookinfo): CalendarEvent => {
                 let booking_event = {
                   title: `${book.title} (Booked by: ${booking.user_id})`,
@@ -202,17 +234,52 @@ export class CalendarComponent implements OnInit {
               tap(response => console.log(response))
             );
           });
-          return forkJoin(arr);
-        })
+          if (arr.length===0) {
+            console.log(arr)
+            this.retrieved_events = [
+              {
+                start: subDays(startOfDay(new Date()), 1),
+                end: addDays(new Date(), 1),
+                title: 'A 3 day event',
+                color: colors.red,
+                actions: this.actions,
+                allDay: true,
+                resizable: {
+                  beforeStart: true,
+                  afterEnd: true
+                },
+                draggable: true
+              }
+            ];
+            return [];
+          } else {
+            return forkJoin(arr);
+          }
+        }),
         // tap(results => console.log(results))
       );
-
+      console.log("fetchEvents");
+            this.retrieved_events = [
+              {
+                start: subDays(startOfDay(new Date()), 1),
+                end: addDays(new Date(), 1),
+                title: 'A 3 day event',
+                color: colors.red,
+                actions: this.actions,
+                allDay: true,
+                resizable: {
+                  beforeStart: true,
+                  afterEnd: true
+                },
+                draggable: true
+              }
+            ];
       this.fetchBooks();
   }
 
   fetchBooks(): void {
     this.books$ = this.http
-    .get('http://63.34.166.57:8080/book/all')
+    .get(this.book_url.base + this.book_url.getAllBooks)
     .pipe(
       tap((books_response: Bookinfo[])=> {
         this.books = [];
@@ -231,13 +298,40 @@ export class CalendarComponent implements OnInit {
         'Content-Type': 'application/json'
       })
     };
-
-    this.bookings.map((booking: Booking) => {
-      this.http.post('http://63.34.166.57:5000/api/1.0/create/booking', booking, httpOptions)
-      .subscribe((response: Response) => console.log(response.status));
-    })
+    this.hideSubmit = true;
+    this.submitStatus = "Submitting...";
+    this.submitting = true;
+    // this.bookings.map((booking: Booking) => {
+      this.http.post(this.booking_url.base + this.booking_url.createBooking, this.bookings[0], httpOptions)
+      // .pipe(
+      //   tap((res: Response) => {
+      //     console.log(res);
+      //     this.hideSubmit = false;
+      //     this.submitting = false;
+      //     this.submitStatus = "Submitted";
+      //   })
+        // finalize(()=>this.fetchEvents())
+      // )
+      .subscribe((response: Response) => {
+        console.log(response)
+        this.submitStatus = "Submitted";
+      });
+      this.fetchEvents();
+      // this.refresh.next();
+      // .unsubscribe();
+    // })
   }
 
+  deleteBooking(index): void {
+    this.bookings.splice(index, 1);
+    if (this.bookings.length > 0) {
+      this.hideSubmit = false;
+      this.hideAdd = true;
+    } else {
+      this.hideSubmit = true;
+      this.hideAdd = false;
+    }
+  }
   // eventClicked(event: CalendarEvent<{ book: Book }>): void {
   //   window.open(
   //     `https://`

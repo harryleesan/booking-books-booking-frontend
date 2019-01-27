@@ -31,17 +31,33 @@
 <h3>
   Edit events
 </h3>
-<button
-  class="btn btn-primary pull-right"
-  (click)="addEvent()">
-  Add new
-</button>
-<button
-  [disabled]="hideSubmit"
-  class="btn btn-success pull-right"
-  (click)="submitBookings()">
-  Submit
-</button>
+<div class="container">
+  <div class="row">
+    <div class="col-sm">
+      <button
+        [disabled]="hideAdd"
+        class="btn btn-primary pull-right"
+        (click)="addEvent()">
+        Add new
+      </button>
+    </div>
+    <div class="col-sm">
+      <button
+        [disabled]="hideSubmit"
+        class="btn btn-success pull-right"
+        (click)="submitBookings()">
+        Submit
+      </button>
+    </div>
+    <div class="col-sm">
+      <input
+        type="text"
+        disabled=true
+        [(ngModel)]="submitStatus"
+      >
+    </div>
+  </div>
+</div>
 <div class="clearfix"></div>
 
 <table class="table table-bordered">
@@ -98,7 +114,7 @@
       <td>
         <button
           class="btn btn-danger"
-          (click)="bookings.splice(index, 1); bookings.length > 0 ? hideSubmit = false : hideSubmit = true">
+          (click)="deleteBooking(index)">
           Delete
         </button>
       </td>
